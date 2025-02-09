@@ -1,6 +1,6 @@
 // Global object to store data per week
 let weeksData = {};
-let currentWeek = ""; // currently selected week (a date string)
+let currentWeek = ""; // Currently selected week (as a date string)
 
 // Load the selected week. If no data exists, initialize it.
 function loadWeek() {
@@ -79,7 +79,6 @@ function addIncome() {
     weeksData[currentWeek].income += amount;
     // Increase the available balance by the added income
     weeksData[currentWeek].remainingBalance += amount;
-    document.getElementById("incomeTotal").innerText = weeksData[currentWeek].income.toFixed(2);
     updateDisplay();
     document.getElementById("incomeInput").value = "";
   }
@@ -183,6 +182,32 @@ function editVariableExpense(index) {
   item.amount = newAmount;
   item.times = newTimes;
   updateDisplay();
+}
+
+// Navigate to the next week
+function nextWeek() {
+  if (!currentWeek) {
+    alert("Please select a week first!");
+    return;
+  }
+  let currDate = new Date(currentWeek);
+  currDate.setDate(currDate.getDate() + 7);
+  let nextWeekDate = currDate.toISOString().split("T")[0];
+  document.getElementById("weekDate").value = nextWeekDate;
+  loadWeek();
+}
+
+// Navigate to the previous week
+function previousWeek() {
+  if (!currentWeek) {
+    alert("Please select a week first!");
+    return;
+  }
+  let currDate = new Date(currentWeek);
+  currDate.setDate(currDate.getDate() - 7);
+  let prevWeekDate = currDate.toISOString().split("T")[0];
+  document.getElementById("weekDate").value = prevWeekDate;
+  loadWeek();
 }
 
 // Reset all stored data and clear the UI
