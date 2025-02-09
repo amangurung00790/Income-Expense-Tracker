@@ -1,4 +1,5 @@
-/* Reset some default styling */
+/* Existing styles... */
+
 * {
   box-sizing: border-box;
 }
@@ -8,6 +9,17 @@ body {
   background-color: #f4f4f4;
   margin: 0;
   padding: 20px;
+}
+
+/* Header styling */
+.app-header {
+  width: 100%;
+  margin-bottom: 20px;
+}
+.app-header img {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
 /* Responsive container */
@@ -60,6 +72,15 @@ button:hover {
   background-color: darkblue;
 }
 
+/* Week navigation styling */
+.week-navigation {
+  margin-top: 10px;
+}
+.week-navigation button {
+  width: auto;
+  margin: 5px;
+}
+
 /* Lists */
 ul {
   list-style: none;
@@ -80,7 +101,6 @@ li {
 
 /* Media Query for Larger Screens */
 @media (min-width: 600px) {
-  /* For larger screens, inputs and buttons can be inline if needed */
   input,
   select,
   button {
@@ -89,7 +109,6 @@ li {
     margin-right: 10px;
   }
   
-  /* Adjust list items */
   li {
     flex-wrap: nowrap;
   }
