@@ -2,12 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <!-- This tag makes sure the page scales correctly on mobile devices -->
+  <!-- Ensures proper scaling on mobile devices -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Income & Expense Tracker</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <!-- Header with a photo placeholder -->
+  <header class="app-header">
+    <img src="https://via.placeholder.com/600x200" alt="App Header Image" />
+  </header>
+
   <div class="container">
     <h1>Income & Expense Tracker</h1>
 
@@ -17,6 +22,11 @@
       <label for="weekDate">Week Ending Date:</label>
       <input type="date" id="weekDate" />
       <button onclick="loadWeek()">Load Week</button>
+      <!-- Week navigation buttons -->
+      <div class="week-navigation">
+        <button onclick="previousWeek()">Previous Week</button>
+        <button onclick="nextWeek()">Next Week</button>
+      </div>
     </div>
 
     <!-- Income Input Section -->
