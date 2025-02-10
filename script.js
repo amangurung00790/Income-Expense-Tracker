@@ -69,42 +69,6 @@ function updateDisplay() {
   document.getElementById('expensesTotal').textContent = data.variableExpenses.toFixed(2);
   document.getElementById('balance').textContent = data.remainingBalance.toFixed(2);
 
-  updateList('fixedCostList', data.fixedExpensesList, (item) => 
-    `${item.name}: $${item.weeklyAmount.toFixed(2)}/wk (${item.frequency})`
-  );
-
-  updateList('expenseList', data.variableExpensesList, (item) => 
-    `${item.name}: $${(item.amount * item.times).toFixed(2)} (${item.times}x)`
-  );
-}
-
-function updateList(listId, items, textFn) {
-  const list = document.getElementById(listId);
-  list.innerHTML = items.map((item, index) => `
-    <li>
-      <span>${textFn(item)}</span>
-      <div>
-        <button onclick="editItem(${index}, '${listId}')">✏️</button>
-        <button onclick="deleteItem(${index}, '${listId}')">🗑️</button>
-      </div>
-    </li>
-  `).join('');
-}
-
-// ... (keep previous code until line 90)
-
-// Update display
-function updateDisplay() {
-  const data = weeksData[currentWeek];
-  if (!data) return;
-
-  // Update summary numbers
-  document.getElementById('incomeTotal').textContent = data.income.toFixed(2);
-  document.getElementById('fixedCostsTotal').textContent = data.fixedCosts.toFixed(2);
-  document.getElementById('expensesTotal').textContent = data.variableExpenses.toFixed(2);
-  document.getElementById('balance').textContent = data.remainingBalance.toFixed(2);
-
-  // Update lists with working edit buttons
   updateList('fixedCostList', data.fixedExpensesList, (item, index) => `
     <li>
       <span>${item.name}: $${item.weeklyAmount.toFixed(2)}/wk (${item.frequency})</span>
@@ -126,7 +90,58 @@ function updateDisplay() {
   `);
 }
 
-// Proper edit functions
+function updateList(listId, items, textFn) {
+  const list = document.getElementById(listId);
+  list.innerHTML = items.map((item, index) => textFn(item, index)).join('');
+}
+
+// Data manipulation
+function addIncome() {
+  const amount = parseFloat(document.getElementById('incomeInput').value);
+  if (!amount) return;
+
+  weeksData[currentWeek].income += amount;
+  weeksData[currentWeek].remainingBalance += amount;
+  document.getElementById('incomeInput').value = '';
+  saveToStorage();
+  updateDisplay();
+}
+
+function addFixedCost() {
+  const name = document.getElementById('fixedCostName').value;
+  const amount = parseFloat(document.getElementById('fixedCostAmount').value);
+  const frequency = document.getElementById('fixedCostFrequency').value;
+  
+  if (!name || !amount) return;
+
+  const weeklyAmount = calculateWeekly(amount, frequency);
+  weeksData[currentWeek].fixedCosts += weeklyAmount;
+  weeksData[currentWeek].remainingBalance -= weeklyAmount;
+  weeksData[currentWeek].fixedExpensesList.push({ name, amount, frequency, weeklyAmount });
+  
+  clearInputs('fixedCostName', 'fixedCostAmount');
+  saveToStorage();
+  updateDisplay();
+}
+
+function addExpense() {
+  const name = document.getElementById('expenseName').value;
+  const amount = parseFloat(document.getElementById('expenseAmount').value);
+  const times = parseInt(document.getElementById('expenseFrequency').value);
+  
+  if (!name || !amount || !times) return;
+
+  const total = amount * times;
+  weeksData[currentWeek].variableExpenses += total;
+  weeksData[currentWeek].remainingBalance -= total;
+  weeksData[currentWeek].variableExpensesList.push({ name, amount, times });
+  
+  clearInputs('expenseName', 'expenseAmount', 'expenseFrequency');
+  saveToStorage();
+  updateDisplay();
+}
+
+// Edit functions
 function editFixedCost(index) {
   const item = weeksData[currentWeek].fixedExpensesList[index];
   const newAmount = parseFloat(prompt('Enter new amount:', item.amount));
@@ -135,13 +150,11 @@ function editFixedCost(index) {
   const newFrequency = prompt('Enter frequency (weekly/fortnightly/monthly):', item.frequency);
   if (!['weekly', 'fortnightly', 'monthly'].includes(newFrequency)) return;
 
-  // Update values
   const oldWeekly = item.weeklyAmount;
   item.amount = newAmount;
   item.frequency = newFrequency;
   item.weeklyAmount = calculateWeekly(newAmount, newFrequency);
 
-  // Update totals
   weeksData[currentWeek].fixedCosts += (item.weeklyAmount - oldWeekly);
   weeksData[currentWeek].remainingBalance += (oldWeekly - item.weeklyAmount);
   
@@ -156,14 +169,12 @@ function editVariableExpense(index) {
   
   if (isNaN(newAmount) || isNaN(newTimes)) return;
 
-  // Update totals
   const oldTotal = item.amount * item.times;
   const newTotal = newAmount * newTimes;
   
   weeksData[currentWeek].variableExpenses += (newTotal - oldTotal);
   weeksData[currentWeek].remainingBalance += (oldTotal - newTotal);
   
-  // Update item
   item.amount = newAmount;
   item.times = newTimes;
   
@@ -171,7 +182,37 @@ function editVariableExpense(index) {
   updateDisplay();
 }
 
-// Add this in the navigation section
+// Helper functions
+function calculateWeekly(amount, frequency) {
+  return {
+    weekly: amount,
+    fortnightly: amount / 2,
+    monthly: amount / 4
+  }[frequency];
+}
+
+function clearInputs(...ids) {
+  ids.forEach(id => document.getElementById(id).value = '');
+}
+
+// Navigation
+function previousWeek() {
+  navigateWeek(-7);
+}
+
+function nextWeek() {
+  navigateWeek(7);
+}
+
+function navigateWeek(days) {
+  if (!currentWeek) return;
+  
+  const newDate = new Date(currentWeek);
+  newDate.setDate(newDate.getDate() + days);
+  document.getElementById('weekDate').value = newDate.toISOString().split('T')[0];
+  loadWeek();
+}
+
 function carryOverBalance() {
   if (!currentWeek) return;
   const previousBalance = getPreviousBalance();
@@ -181,11 +222,10 @@ function carryOverBalance() {
   updateDisplay();
 }
 
-// Update the initialize function
-document.addEventListener('DOMContentLoaded', () => {
-  loadFromStorage();
-  const today = new Date();
-  const nextMonday = new Date(today.setDate(today.getDate() + (1 + 7 - today.getDay()) % 7));
-  document.getElementById('weekDate').value = nextMonday.toISOString().split('T')[0];
-  loadWeek();
-});
+// Delete items
+function deleteItem(index, listType) {
+  const data = weeksData[currentWeek];
+  const list = listType === 'fixedCostList' ? data.fixedExpensesList : data.variableExpensesList;
+  const item = list[index];
+  
+  if (listType
