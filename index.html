@@ -1,82 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <!-- Ensures proper scaling on mobile devices -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Income & Expense Tracker</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Budget Tracker Pro</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <!-- Header with a photo placeholder -->
-  <header class="app-header">
-    <img src="https://via.placeholder.com/600x200" alt="App Header Image" />
-  </header>
-
   <div class="container">
-    <h1>Income & Expense Tracker</h1>
+    <header class="header">
+      <label for="imageInput" class="header-image-container">
+        <input type="file" id="imageInput" accept="image/*" onchange="previewImage(event)">
+        <img id="headerImage" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAWgAAACQAQMAAAD+JJlvAAAAA1BMVEUAAACnej3aAAAAAXRSTlMAQObYZgAAABxJREFUeNrtwQEBAAAAgiD/r25IQAEAAAAAAAAA4E8CFFAAAZ+HbYUAAAAASUVORK5CYII=" alt="Header Image">
+        <span class="upload-text">Click to upload header image</span>
+      </label>
+      <h1>Weekly Budget Tracker</h1>
+    </header>
 
-    <!-- Week Selection Section -->
-    <div class="section">
-      <h2>Select Week</h2>
-      <label for="weekDate">Week Ending Date:</label>
-      <input type="date" id="weekDate" />
-      <button onclick="loadWeek()">Load Week</button>
-      <!-- Week navigation buttons -->
-      <div class="week-navigation">
-        <button onclick="previousWeek()">Previous Week</button>
-        <button onclick="nextWeek()">Next Week</button>
+    <main class="main-content">
+      <section class="controls">
+        <div class="input-group">
+          <label for="weekDate">Select Week Ending Date:</label>
+          <input type="date" id="weekDate">
+          <div class="button-group">
+            <button class="button" onclick="previousWeek()">← Previous</button>
+            <button class="button" onclick="nextWeek()">Next →</button>
+          </div>
+        </div>
+
+        <div class="input-row">
+          <div class="input-group">
+            <h2>Add Income</h2>
+            <input type="number" id="incomeInput" placeholder="Amount">
+            <button class="button" onclick="addIncome()">Add Income</button>
+          </div>
+
+          <div class="input-group">
+            <h2>Fixed Costs</h2>
+            <input type="text" id="fixedCostName" placeholder="Name">
+            <input type="number" id="fixedCostAmount" placeholder="Amount">
+            <select id="fixedCostFrequency">
+              <option value="weekly">Weekly</option>
+              <option value="fortnightly">Fortnightly</option>
+              <option value="monthly">Monthly</option>
+            </select>
+            <button class="button" onclick="addFixedCost()">Add Fixed Cost</button>
+          </div>
+
+          <div class="input-group">
+            <h2>Variable Expenses</h2>
+            <input type="text" id="expenseName" placeholder="Name">
+            <input type="number" id="expenseAmount" placeholder="Per occurrence">
+            <input type="number" id="expenseFrequency" placeholder="Times per week">
+            <button class="button" onclick="addExpense()">Add Expense</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="summary">
+        <h2>Weekly Summary</h2>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <h3>Income</h3>
+            <p>$<span id="incomeTotal">0.00</span></p>
+          </div>
+          <div class="summary-item">
+            <h3>Fixed Costs</h3>
+            <p>$<span id="fixedCostsTotal">0.00</span></p>
+          </div>
+          <div class="summary-item">
+            <h3>Expenses</h3>
+            <p>$<span id="expensesTotal">0.00</span></p>
+          </div>
+          <div class="summary-item highlight">
+            <h3>Balance</h3>
+            <p>$<span id="balance">0.00</span></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="lists">
+        <div class="list-container">
+          <h2>Fixed Costs</h2>
+          <ul id="fixedCostList" class="list"></ul>
+        </div>
+        <div class="list-container">
+          <h2>Variable Expenses</h2>
+          <ul id="expenseList" class="list"></ul>
+        </div>
+      </section>
+
+      <div class="reset-section">
+        <button class="button danger" onclick="resetData()">Reset All Data</button>
       </div>
-    </div>
-
-    <!-- Income Input Section -->
-    <div class="section">
-      <h2>Add Weekly Income</h2>
-      <input type="number" id="incomeInput" placeholder="Enter Income" />
-      <button onclick="addIncome()">Add Income</button>
-    </div>
-
-    <!-- Fixed Cost Section -->
-    <div class="section">
-      <h2>Add Fixed Cost</h2>
-      <input type="text" id="fixedCostName" placeholder="Expense Name" />
-      <input type="number" id="fixedCostAmount" placeholder="Amount" />
-      <select id="fixedCostFrequency">
-        <option value="weekly">Weekly</option>
-        <option value="fortnightly">Fortnightly</option>
-        <option value="monthly">Monthly</option>
-      </select>
-      <button onclick="addFixedCost()">Add Fixed Cost</button>
-      <ul id="fixedCostList"></ul>
-    </div>
-
-    <!-- Variable Expenses Section -->
-    <div class="section">
-      <h2>Add Variable Expense</h2>
-      <input type="text" id="expenseName" placeholder="Expense Name" />
-      <input type="number" id="expenseAmount" placeholder="Amount" />
-      <input type="number" id="expenseFrequency" placeholder="How many times?" />
-      <button onclick="addExpense()">Add Expense</button>
-      <ul id="expenseList"></ul>
-    </div>
-
-    <!-- Balance Summary Section -->
-    <div class="section">
-      <h2>Balance Summary</h2>
-      <p>Income: $<span id="incomeTotal">0</span></p>
-      <p>Fixed Costs: $<span id="fixedCostsTotal">0</span></p>
-      <p>Variable Expenses: $<span id="expensesTotal">0</span></p>
-      <p>
-        <strong>
-          Remaining Balance: $<span id="balance">0</span>
-        </strong>
-      </p>
-    </div>
-    
-    <!-- Reset Data Section -->
-    <div class="section">
-      <button onclick="resetData()">Reset All Data</button>
-    </div>
+    </main>
   </div>
 
   <script src="script.js"></script>
