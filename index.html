@@ -1,210 +1,101 @@
-// Initialize app
-let weeksData = {};
-let currentWeek = "";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Budget Tracker Pro</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <label for="imageInput" class="header-image-container">
+        <input type="file" id="imageInput" accept="image/*" onchange="previewImage(event)">
+        <img id="headerImage" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAWgAAACQAQMAAAD+JJlvAAAAA1BMVEUAAACnej3aAAAAAXRSTlMAQObYZgAAABxJREFUeNrtwQEBAAAAgiD/r25IQAEAAAAAAAAA4E8CFFAAAZ+HbYUAAAAASUVORK5CYII=" alt="Header Image">
+        <span class="upload-text">Click to upload header image</span>
+      </label>
+      <h1>Weekly Budget Tracker</h1>
+    </header>
 
-// Load saved data on startup
-function loadFromStorage() {
-  const savedData = localStorage.getItem('budgetData');
-  if (savedData) weeksData = JSON.parse(savedData);
-  
-  const savedImage = localStorage.getItem('headerImage');
-  if (savedImage) {
-    document.getElementById('headerImage').src = savedImage;
-  }
-}
+    <main class="main-content">
+      <section class="controls">
+        <div class="input-group">
+          <label for="weekDate">Select Week Ending Date:</label>
+          <input type="date" id="weekDate">
+          <div class="button-group">
+            <button class="button" onclick="previousWeek()">← Previous</button>
+            <button class="button" onclick="nextWeek()">Next →</button>
+          </div>
+        </div>
 
-// Save data to localStorage
-function saveToStorage() {
-  localStorage.setItem('budgetData', JSON.stringify(weeksData));
-}
+        <div class="input-row">
+          <div class="input-group">
+            <h2>Add Income</h2>
+            <input type="number" id="incomeInput" placeholder="Amount">
+            <button class="button" onclick="addIncome()">Add Income</button>
+          </div>
 
-// Image handling
-function previewImage(event) {
-  const file = event.target.files[0];
-  if (!file) return;
+          <div class="input-group">
+            <h2>Fixed Costs</h2>
+            <input type="text" id="fixedCostName" placeholder="Name">
+            <input type="number" id="fixedCostAmount" placeholder="Amount">
+            <select id="fixedCostFrequency">
+              <option value="weekly">Weekly</option>
+              <option value="fortnightly">Fortnightly</option>
+              <option value="monthly">Monthly</option>
+            </select>
+            <button class="button" onclick="addFixedCost()">Add Fixed Cost</button>
+          </div>
 
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const headerImage = document.getElementById('headerImage');
-    headerImage.src = e.target.result;
-    localStorage.setItem('headerImage', e.target.result);
-  };
-  reader.readAsDataURL(file);
-}
+          <div class="input-group">
+            <h2>Variable Expenses</h2>
+            <input type="text" id="expenseName" placeholder="Name">
+            <input type="number" id="expenseAmount" placeholder="Per occurrence">
+            <input type="number" id="expenseFrequency" placeholder="Times per week">
+            <button class="button" onclick="addExpense()">Add Expense</button>
+          </div>
+        </div>
+      </section>
 
-// Week navigation
-document.getElementById('weekDate').addEventListener('change', loadWeek);
+      <section class="summary">
+        <h2>Weekly Summary</h2>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <h3>Income</h3>
+            <p>$<span id="incomeTotal">0.00</span></p>
+          </div>
+          <div class="summary-item">
+            <h3>Fixed Costs</h3>
+            <p>$<span id="fixedCostsTotal">0.00</span></p>
+          </div>
+          <div class="summary-item">
+            <h3>Expenses</h3>
+            <p>$<span id="expensesTotal">0.00</span></p>
+          </div>
+          <div class="summary-item highlight">
+            <h3>Balance</h3>
+            <p>$<span id="balance">0.00</span></p>
+          </div>
+        </div>
+      </section>
 
-function loadWeek() {
-  const dateVal = document.getElementById('weekDate').value;
-  if (!dateVal) return;
+      <section class="lists">
+        <div class="list-container">
+          <h2>Fixed Costs</h2>
+          <ul id="fixedCostList" class="list"></ul>
+        </div>
+        <div class="list-container">
+          <h2>Variable Expenses</h2>
+          <ul id="expenseList" class="list"></ul>
+        </div>
+      </section>
 
-  currentWeek = dateVal;
-  if (!weeksData[currentWeek]) {
-    weeksData[currentWeek] = {
-      income: 0,
-      fixedCosts: 0,
-      variableExpenses: 0,
-      remainingBalance: getPreviousBalance(),
-      fixedExpensesList: [],
-      variableExpensesList: []
-    };
-  }
-  updateDisplay();
-  saveToStorage();
-}
-
-function getPreviousBalance() {
-  const weeks = Object.keys(weeksData).sort();
-  return weeks.length > 0 ? weeksData[weeks[weeks.length-1]].remainingBalance : 0;
-}
-
-// Update display
-function updateDisplay() {
-  const data = weeksData[currentWeek];
-  if (!data) return;
-
-  document.getElementById('incomeTotal').textContent = data.income.toFixed(2);
-  document.getElementById('fixedCostsTotal').textContent = data.fixedCosts.toFixed(2);
-  document.getElementById('expensesTotal').textContent = data.variableExpenses.toFixed(2);
-  document.getElementById('balance').textContent = data.remainingBalance.toFixed(2);
-
-  updateList('fixedCostList', data.fixedExpensesList, (item) => 
-    `${item.name}: $${item.weeklyAmount.toFixed(2)}/wk (${item.frequency})`
-  );
-
-  updateList('expenseList', data.variableExpensesList, (item) => 
-    `${item.name}: $${(item.amount * item.times).toFixed(2)} (${item.times}x)`
-  );
-}
-
-function updateList(listId, items, textFn) {
-  const list = document.getElementById(listId);
-  list.innerHTML = items.map((item, index) => `
-    <li>
-      <span>${textFn(item)}</span>
-      <div>
-        <button onclick="editItem(${index}, '${listId}')">✏️</button>
-        <button onclick="deleteItem(${index}, '${listId}')">🗑️</button>
+      <div class="reset-section">
+        <button class="button danger" onclick="resetData()">Reset All Data</button>
       </div>
-    </li>
-  `).join('');
-}
+    </main>
+  </div>
 
-// Data manipulation
-function addIncome() {
-  const amount = parseFloat(document.getElementById('incomeInput').value);
-  if (!amount) return;
-
-  weeksData[currentWeek].income += amount;
-  weeksData[currentWeek].remainingBalance += amount;
-  document.getElementById('incomeInput').value = '';
-  saveToStorage();
-  updateDisplay();
-}
-
-function addFixedCost() {
-  const name = document.getElementById('fixedCostName').value;
-  const amount = parseFloat(document.getElementById('fixedCostAmount').value);
-  const frequency = document.getElementById('fixedCostFrequency').value;
-  
-  if (!name || !amount) return;
-
-  const weeklyAmount = calculateWeekly(amount, frequency);
-  weeksData[currentWeek].fixedCosts += weeklyAmount;
-  weeksData[currentWeek].remainingBalance -= weeklyAmount;
-  weeksData[currentWeek].fixedExpensesList.push({ name, amount, frequency, weeklyAmount });
-  
-  clearInputs('fixedCostName', 'fixedCostAmount');
-  saveToStorage();
-  updateDisplay();
-}
-
-function addExpense() {
-  const name = document.getElementById('expenseName').value;
-  const amount = parseFloat(document.getElementById('expenseAmount').value);
-  const times = parseInt(document.getElementById('expenseFrequency').value);
-  
-  if (!name || !amount || !times) return;
-
-  const total = amount * times;
-  weeksData[currentWeek].variableExpenses += total;
-  weeksData[currentWeek].remainingBalance -= total;
-  weeksData[currentWeek].variableExpensesList.push({ name, amount, times });
-  
-  clearInputs('expenseName', 'expenseAmount', 'expenseFrequency');
-  saveToStorage();
-  updateDisplay();
-}
-
-// Helper functions
-function calculateWeekly(amount, frequency) {
-  return {
-    weekly: amount,
-    fortnightly: amount / 2,
-    monthly: amount / 4
-  }[frequency];
-}
-
-function clearInputs(...ids) {
-  ids.forEach(id => document.getElementById(id).value = '');
-}
-
-// Navigation
-function previousWeek() {
-  navigateWeek(-7);
-}
-
-function nextWeek() {
-  navigateWeek(7);
-}
-
-function navigateWeek(days) {
-  if (!currentWeek) return;
-  
-  const newDate = new Date(currentWeek);
-  newDate.setDate(newDate.getDate() + days);
-  document.getElementById('weekDate').value = newDate.toISOString().split('T')[0];
-  loadWeek();
-}
-
-// Edit/Delete items
-function editItem(index, listType) {
-  // Implementation for edit (similar to previous but enhanced)
-  // Add proper edit modals/inputs as needed
-}
-
-function deleteItem(index, listType) {
-  const data = weeksData[currentWeek];
-  const list = listType === 'fixedCostList' ? data.fixedExpensesList : data.variableExpensesList;
-  const item = list[index];
-  
-  if (listType === 'fixedCostList') {
-    data.fixedCosts -= item.weeklyAmount;
-    data.remainingBalance += item.weeklyAmount;
-  } else {
-    data.variableExpenses -= item.amount * item.times;
-    data.remainingBalance += item.amount * item.times;
-  }
-  
-  list.splice(index, 1);
-  saveToStorage();
-  updateDisplay();
-}
-
-// Reset data
-function resetData() {
-  if (confirm('Are you sure you want to reset ALL data?')) {
-    weeksData = {};
-    localStorage.removeItem('budgetData');
-    localStorage.removeItem('headerImage');
-    location.reload();
-  }
-}
-
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
-  loadFromStorage();
-  document.getElementById('weekDate').value = new Date().toISOString().split('T')[0];
-  loadWeek();
-});
+  <script src="script.js"></script>
+</body>
+</html>
