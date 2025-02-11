@@ -1,334 +1,280 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Weekly Budget Tracker Pro</title>
-  <style>
-    /* Basic CSS styling */
-    body {
-      font-family: Arial, sans-serif;
-      background: #f0f0f0;
-      margin: 0;
-      padding: 0;
-    }
-    .container {
-      max-width: 1000px;
-      margin: 20px auto;
-      background: #fff;
-      padding: 20px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    }
-    .header {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-    }
-    .header-image-container {
-      position: relative;
-      display: inline-block;
-      cursor: pointer;
-    }
-    .header-image-container input {
-      display: none;
-    }
-    .header-image-container img {
-      width: 80px;
-      height: 80px;
-      object-fit: cover;
-      border-radius: 50%;
-      border: 2px solid #ccc;
-    }
-    .upload-text {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(0, 0, 0, 0.5);
-      color: #fff;
-      padding: 2px 5px;
-      font-size: 12px;
-      opacity: 0;
-      transition: opacity 0.3s;
-      border-radius: 3px;
-    }
-    .header-image-container:hover .upload-text {
-      opacity: 1;
-    }
-    h1 {
-      margin: 0;
-      font-size: 24px;
-    }
-    .main-content {
-      margin-top: 20px;
-    }
-    .controls,
-    .summary,
-    .lists,
-    .reset-section {
-      margin-bottom: 20px;
-    }
-    .input-group {
-      margin-bottom: 10px;
-    }
-    input[type="number"],
-    input[type="text"],
-    input[type="date"],
-    select {
-      padding: 5px;
-      margin-right: 10px;
-      border: 1px solid #ccc;
-      border-radius: 3px;
-    }
-    .button {
-      padding: 5px 10px;
-      cursor: pointer;
-      border: none;
-      background-color: #3498db;
-      color: #fff;
-      border-radius: 3px;
-      margin-right: 5px;
-    }
-    .button:hover {
-      background-color: #2980b9;
-    }
-    .danger {
-      background: #e74c3c;
-    }
-    .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 10px;
-    }
-    .summary-item {
-      background: #ecf0f1;
-      padding: 10px;
-      text-align: center;
-      border-radius: 5px;
-    }
-    .highlight {
-      background: #2ecc71;
-      color: #fff;
-    }
-    ul.list {
-      list-style: none;
-      padding: 0;
-    }
-    ul.list li {
-      padding: 5px 0;
-      border-bottom: 1px solid #ccc;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <header class="header">
-      <label for="imageInput" class="header-image-container">
-        <input type="file" id="imageInput" accept="image/*" onchange="previewImage(event)" />
-        <img id="headerImage" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAWgAAACQAQMAAAD+JJlvAAAAA1BMVEUAAACnej3aAAAAAXRSTlMAQObYZgAAABxJREFUeNrtwQEBAAAAgiD/r25IQAEAAAAAAAAA4E8CFFAAAZ+HbYUAAAAASUVORK5CYII=" alt="Header Image" />
-        <span class="upload-text">Click to upload header image</span>
-      </label>
-      <h1>Weekly Budget Tracker</h1>
-    </header>
+:root {
+  --primary: #007bff;
+  --secondary: #6c757d;
+  --success: #28a745;
+  --danger: #dc3545;
+  --light: #f8f9fa;
+  --dark: #343a40;
+}
 
-    <main class="main-content">
-      <section class="controls">
-        <div class="input-group">
-          <label for="weekDate">Select Week Ending Date:</label>
-          <input type="date" id="weekDate" />
-          <div class="button-group">
-            <button class="button" onclick="carryOverBalance()">Carry Over Balance</button>
-            <button class="button" onclick="previousWeek()">← Previous</button>
-            <button class="button" onclick="nextWeek()">Next →</button>
-          </div>
-        </div>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-        <div class="input-row">
-          <div class="input-group">
-            <h2>Add Income</h2>
-            <input type="number" id="incomeInput" placeholder="Amount" />
-            <button class="button" onclick="addIncome()">Add Income</button>
-          </div>
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  line-height: 1.6;
+  background: #f4f4f4;
+  color: var(--dark);
+  padding: 20px;
+}
 
-          <div class="input-group">
-            <h2>Fixed Costs</h2>
-            <input type="text" id="fixedCostName" placeholder="Name" />
-            <input type="number" id="fixedCostAmount" placeholder="Amount" />
-            <select id="fixedCostFrequency">
-              <option value="weekly">Weekly</option>
-              <option value="fortnightly">Fortnightly</option>
-              <option value="monthly">Monthly</option>
-            </select>
-            <button class="button" onclick="addFixedCost()">Add Fixed Cost</button>
-          </div>
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
 
-          <div class="input-group">
-            <h2>Variable Expenses</h2>
-            <input type="text" id="expenseName" placeholder="Name" />
-            <input type="number" id="expenseAmount" placeholder="Per occurrence" />
-            <input type="number" id="expenseFrequency" placeholder="Times per week" />
-            <button class="button" onclick="addExpense()">Add Expense</button>
-          </div>
-        </div>
-      </section>
+.header {
+  position: relative;
+  text-align: center;
+  margin-bottom: 2rem;
+}
 
-      <section class="summary">
-        <h2>Weekly Summary</h2>
-        <div class="summary-grid">
-          <div class="summary-item">
-            <h3>Income</h3>
-            <p>$<span id="incomeTotal">0.00</span></p>
-          </div>
-          <div class="summary-item">
-            <h3>Fixed Costs</h3>
-            <p>$<span id="fixedCostsTotal">0.00</span></p>
-          </div>
-          <div class="summary-item">
-            <h3>Expenses</h3>
-            <p>$<span id="expensesTotal">0.00</span></p>
-          </div>
-          <div class="summary-item highlight">
-            <h3>Balance</h3>
-            <p>$<span id="balance">0.00</span></p>
-          </div>
-        </div>
-      </section>
+.header-image-container {
+  position: relative;
+  display: block;
+  cursor: pointer;
+  margin: 0 auto;
+  max-width: 100%;
+  height: 250px;
+  overflow: hidden;
+}
 
-      <section class="lists">
-        <div class="list-container">
-          <h2>Fixed Costs</h2>
-          <ul id="fixedCostList" class="list"></ul>
-        </div>
-        <div class="list-container">
-          <h2>Variable Expenses</h2>
-          <ul id="expenseList" class="list"></ul>
-        </div>
-      </section>
+#headerImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
 
-      <div class="reset-section">
-        <button class="button danger" onclick="resetData()">Reset All Data</button>
-      </div>
-    </main>
-  </div>
+.header-image-container:hover #headerImage {
+  transform: scale(1.05);
+}
 
-  <script>
-    // Initialize totals
-    let incomeTotal = 0;
-    let fixedCostsTotal = 0;
-    let expensesTotal = 0;
+.upload-text {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 8px 20px;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
 
-    // Update the summary display
-    function updateSummary() {
-      document.getElementById("incomeTotal").textContent = incomeTotal.toFixed(2);
-      document.getElementById("fixedCostsTotal").textContent = fixedCostsTotal.toFixed(2);
-      document.getElementById("expensesTotal").textContent = expensesTotal.toFixed(2);
-      const balance = incomeTotal - (fixedCostsTotal + expensesTotal);
-      document.getElementById("balance").textContent = balance.toFixed(2);
-    }
+.header-image-container:hover .upload-text {
+  opacity: 1;
+}
 
-    // Add Income: Updates incomeTotal and then the balance
-    function addIncome() {
-      const incomeInput = document.getElementById("incomeInput");
-      const amount = parseFloat(incomeInput.value);
-      if (isNaN(amount) || amount <= 0) {
-        alert("Please enter a valid income amount.");
-        return;
-      }
-      incomeTotal += amount;
-      updateSummary();
-      incomeInput.value = "";
-    }
+.main-content {
+  padding: 20px;
+}
 
-    // Add Fixed Cost: For simplicity, this adds the cost directly as a weekly cost.
-    function addFixedCost() {
-      const costName = document.getElementById("fixedCostName").value;
-      const costAmount = parseFloat(document.getElementById("fixedCostAmount").value);
-      const costFrequency = document.getElementById("fixedCostFrequency").value;
-      if (!costName || isNaN(costAmount) || costAmount <= 0) {
-        alert("Please enter valid fixed cost details.");
-        return;
-      }
-      // Here, we assume the fixed cost is a weekly cost.
-      fixedCostsTotal += costAmount;
-      updateSummary();
+.input-group {
+  margin-bottom: 1.5rem;
+  padding: 15px;
+  background: var(--light);
+  border-radius: 10px;
+}
 
-      // Append to the fixed costs list
-      const fixedCostList = document.getElementById("fixedCostList");
-      const listItem = document.createElement("li");
-      listItem.textContent = `${costName} (${costFrequency}): $${costAmount.toFixed(2)}`;
-      fixedCostList.appendChild(listItem);
+.input-row {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
 
-      // Clear the input fields
-      document.getElementById("fixedCostName").value = "";
-      document.getElementById("fixedCostAmount").value = "";
-      document.getElementById("fixedCostFrequency").value = "weekly";
-    }
+.button {
+  background: linear-gradient(135deg, var(--primary), #0056b3);
+  color: white;
+  border: none;
+  padding: 12px 25px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  width: 100%;
+}
 
-    // Add Variable Expense: Calculates the total expense and updates the summary.
-    function addExpense() {
-      const expenseName = document.getElementById("expenseName").value;
-      const expenseAmount = parseFloat(document.getElementById("expenseAmount").value);
-      const expenseFrequency = parseFloat(document.getElementById("expenseFrequency").value);
-      if (
-        !expenseName ||
-        isNaN(expenseAmount) ||
-        expenseAmount <= 0 ||
-        isNaN(expenseFrequency) ||
-        expenseFrequency <= 0
-      ) {
-        alert("Please enter valid expense details.");
-        return;
-      }
-      const totalExpense = expenseAmount * expenseFrequency;
-      expensesTotal += totalExpense;
-      updateSummary();
+.button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
 
-      // Append to the expenses list
-      const expenseList = document.getElementById("expenseList");
-      const listItem = document.createElement("li");
-      listItem.textContent = `${expenseName}: $${totalExpense.toFixed(2)}`;
-      expenseList.appendChild(listItem);
+.danger {
+  background: linear-gradient(135deg, var(--danger), #a71d2a);
+}
 
-      // Clear the input fields
-      document.getElementById("expenseName").value = "";
-      document.getElementById("expenseAmount").value = "";
-      document.getElementById("expenseFrequency").value = "";
-    }
+.balance-carry {
+  background: linear-gradient(135deg, var(--success), #218838) !important;
+}
 
-    // Placeholder functions for additional features
-    function carryOverBalance() {
-      alert("Carry Over Balance function not implemented yet.");
-    }
-    function previousWeek() {
-      alert("Previous Week function not implemented yet.");
-    }
-    function nextWeek() {
-      alert("Next Week function not implemented yet.");
-    }
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
 
-    // Reset all data
-    function resetData() {
-      if (confirm("Are you sure you want to reset all data?")) {
-        incomeTotal = 0;
-        fixedCostsTotal = 0;
-        expensesTotal = 0;
-        updateSummary();
-        document.getElementById("fixedCostList").innerHTML = "";
-        document.getElementById("expenseList").innerHTML = "";
-      }
-    }
+.summary-item {
+  padding: 1.5rem;
+  background: var(--light);
+  border-radius: 10px;
+  text-align: center;
+}
 
-    // Preview the header image when a new file is selected
-    function previewImage(event) {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function () {
-          document.getElementById("headerImage").src = reader.result;
-        };
-        reader.readAsDataURL(file);
-      }
-    }
-  </script>
-</body>
-</html>
+.summary-item.highlight {
+  background: linear-gradient(135deg, var(--primary), #0056b3);
+  color: white;
+}
+
+.lists {
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.list {
+  list-style: none;
+}
+
+.list li {
+  padding: 1rem;
+  margin: 0.5rem 0;
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: transform 0.2s ease;
+}
+
+.list li:hover {
+  transform: translateX(5px);
+}
+
+.icon-btn {
+  padding: 5px !important;
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 50% !important;
+  margin-left: 5px;
+  transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+  transform: scale(1.1) translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+@media (max-width: 768px) {
+  .container {
+    border-radius: 0;
+  }
+  
+  .input-row {
+    grid-template-columns: 1fr;
+  }
+
+  .button-group {
+    flex-direction: column;
+  }
+
+  .button {
+    margin: 5px 0;
+  }
+
+  .header-image-container {
+    height: 180px;
+  }
+
+  .upload-text {
+    font-size: 0.8rem;
+    padding: 5px 15px;
+  }
+
+  .list li {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .list li div {
+    margin-top: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    padding: 10px;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .input-group {
+    padding: 10px;
+  }
+}
+
+.reset-section {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+/* Add these new styles */
+.list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  padding: 1rem;
+  margin: 0.5rem 0;
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 8px;
+}
+
+.list-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.list-item-actions {
+  display: flex;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.list li strong {
+  display: block;
+  margin-bottom: 3px;
+}
+
+.list li br {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .list li {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .list-item-actions {
+    justify-content: flex-end;
+  }
+  
+  .list li br {
+    display: inline;
+  }
+}
