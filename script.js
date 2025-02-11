@@ -71,8 +71,11 @@ function updateDisplay() {
 
   updateList('fixedCostList', data.fixedExpensesList, (item, index) => `
     <li>
-      <span>${item.name}: $${item.weeklyAmount.toFixed(2)}/wk (${item.frequency})</span>
-      <div>
+      <div class="list-item-content">
+        <strong>${item.name}</strong><br>
+        $${item.amount} ${item.frequency} → $${item.weeklyAmount.toFixed(2)}/week
+      </div>
+      <div class="list-item-actions">
         <button class="icon-btn" onclick="editFixedCost(${index})">✏️</button>
         <button class="icon-btn danger" onclick="deleteItem(${index}, 'fixedCostList')">🗑️</button>
       </div>
@@ -81,8 +84,11 @@ function updateDisplay() {
 
   updateList('expenseList', data.variableExpensesList, (item, index) => `
     <li>
-      <span>${item.name}: $${(item.amount * item.times).toFixed(2)} (${item.times}x)</span>
-      <div>
+      <div class="list-item-content">
+        <strong>${item.name}</strong><br>
+        $${item.amount} × ${item.times} = $${(item.amount * item.times).toFixed(2)}
+      </div>
+      <div class="list-item-actions">
         <button class="icon-btn" onclick="editVariableExpense(${index})">✏️</button>
         <button class="icon-btn danger" onclick="deleteItem(${index}, 'expenseList')">🗑️</button>
       </div>
@@ -97,46 +103,84 @@ function updateList(listId, items, textFn) {
 
 // Data manipulation
 function addIncome() {
-  const amount = parseFloat(document.getElementById('incomeInput').value);
-  if (!amount) return;
+  if (!currentWeek) {
+    alert("Please select a week first!");
+    return;
+  }
+  
+  const amountInput = document.getElementById('incomeInput');
+  const amount = parseFloat(amountInput.value);
+  
+  if (!amount || isNaN(amount)) {
+    alert("Please enter a valid income amount");
+    return;
+  }
 
   weeksData[currentWeek].income += amount;
   weeksData[currentWeek].remainingBalance += amount;
-  document.getElementById('incomeInput').value = '';
+  amountInput.value = '';
   saveToStorage();
   updateDisplay();
 }
 
 function addFixedCost() {
+  if (!currentWeek) {
+    alert("Please select a week first!");
+    return;
+  }
+  
   const name = document.getElementById('fixedCostName').value;
   const amount = parseFloat(document.getElementById('fixedCostAmount').value);
   const frequency = document.getElementById('fixedCostFrequency').value;
   
-  if (!name || !amount) return;
+  if (!name || !amount) {
+    alert("Please fill in all required fields");
+    return;
+  }
 
   const weeklyAmount = calculateWeekly(amount, frequency);
   weeksData[currentWeek].fixedCosts += weeklyAmount;
   weeksData[currentWeek].remainingBalance -= weeklyAmount;
-  weeksData[currentWeek].fixedExpensesList.push({ name, amount, frequency, weeklyAmount });
+  weeksData[currentWeek].fixedExpensesList.push({ 
+    name, 
+    amount,
+    frequency,
+    weeklyAmount 
+  });
   
-  clearInputs('fixedCostName', 'fixedCostAmount');
+  document.getElementById('fixedCostName').value = '';
+  document.getElementById('fixedCostAmount').value = '';
   saveToStorage();
   updateDisplay();
 }
 
 function addExpense() {
+  if (!currentWeek) {
+    alert("Please select a week first!");
+    return;
+  }
+  
   const name = document.getElementById('expenseName').value;
   const amount = parseFloat(document.getElementById('expenseAmount').value);
   const times = parseInt(document.getElementById('expenseFrequency').value);
   
-  if (!name || !amount || !times) return;
+  if (!name || !amount || !times) {
+    alert("Please fill in all required fields");
+    return;
+  }
 
   const total = amount * times;
   weeksData[currentWeek].variableExpenses += total;
   weeksData[currentWeek].remainingBalance -= total;
-  weeksData[currentWeek].variableExpensesList.push({ name, amount, times });
+  weeksData[currentWeek].variableExpensesList.push({ 
+    name, 
+    amount,
+    times 
+  });
   
-  clearInputs('expenseName', 'expenseAmount', 'expenseFrequency');
+  document.getElementById('expenseName').value = '';
+  document.getElementById('expenseAmount').value = '';
+  document.getElementById('expenseFrequency').value = '';
   saveToStorage();
   updateDisplay();
 }
@@ -187,12 +231,8 @@ function calculateWeekly(amount, frequency) {
   return {
     weekly: amount,
     fortnightly: amount / 2,
-    monthly: amount / 4
+    monthly: amount / 4.33 // More accurate monthly->weekly conversion
   }[frequency];
-}
-
-function clearInputs(...ids) {
-  ids.forEach(id => document.getElementById(id).value = '');
 }
 
 // Navigation
@@ -228,4 +268,24 @@ function deleteItem(index, listType) {
   const list = listType === 'fixedCostList' ? data.fixedExpensesList : data.variableExpensesList;
   const item = list[index];
   
-  if (listType
+  if (listType === 'fixedCostList') {
+    data.fixedCosts -= item.weeklyAmount;
+    data.remainingBalance += item.weeklyAmount;
+  } else {
+    data.variableExpenses -= item.amount * item.times;
+    data.remainingBalance += item.amount * item.times;
+  }
+  
+  list.splice(index, 1);
+  saveToStorage();
+  updateDisplay();
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  loadFromStorage();
+  const today = new Date();
+  const nextMonday = new Date(today.setDate(today.getDate() + (1 + 7 - today.getDay()) % 7));
+  document.getElementById('weekDate').value = nextMonday.toISOString().split('T')[0];
+  loadWeek();
+});
